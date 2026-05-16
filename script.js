@@ -237,7 +237,7 @@ function buildCard(item) {
       : `<div class="card-no-img">🎬</div>`
     }
       <div class="card-overlay">
-        <button class="card-action play" title="Trailer"><i class="fas fa-play"></i></button>
+        <button class="card-action play" title="Play"><i class="fas fa-play"></i></button>
         <button class="card-action info" title="Details"><i class="fas fa-circle-info"></i></button>
       </div>
     </div>
@@ -266,7 +266,7 @@ function buildCard(item) {
   });
 
   card.querySelector('.play').addEventListener('click', e => {
-    window.location.href = `movie.html?id=${item.id}`;
+    window.location.href = `7movie?id=${item.id}`;
   });
   
   return card;
