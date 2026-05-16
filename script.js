@@ -1,7 +1,7 @@
 'use strict';
 
 const CONFIG = {
-  apiKey: '56b9ae0a0d68f267ca7bbe202fdcaaa8',
+  apiKey: 'dc6928354c2596ad811fdc698560b4ac',
   base: 'https://api.themoviedb.org/3',
   img: 'https://image.tmdb.org/t/p/w780',
   storage: 'cs_saved_v2',
@@ -265,13 +265,10 @@ function buildCard(item) {
     Sheet.openDetail(item);
   });
 
-  card.querySelector('.play').addEventListener('click', async e => {
-    e.stopPropagation();
-    const mt = item.media_type || (item.title ? 'movie' : 'tv');
-    const url = await API.trailer(item.id, mt);
-    url ? window.open(url, '_blank') : Toast.show('No trailer available');
+  card.querySelector('.play').addEventListener('click', e => {
+    window.location.href = `movie.html?id=${item.id}`;
   });
-
+  
   return card;
 }
 
