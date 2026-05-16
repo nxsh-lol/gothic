@@ -266,7 +266,7 @@ function buildCard(item) {
   });
 
   card.querySelector('.play').addEventListener('click', e => {
-    window.location.href = `/movie?id=${item.id}`;
+    window.location.href = `/watch?id=${item.id}`;
   });
   
   return card;
