@@ -2,46 +2,112 @@
 <html lang="en">
 
 <head>
+
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Watch Movie</title>
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Watch</title>
+
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: black; overflow: hidden; font-family: Arial, sans-serif; }
-    .topbar {
-      position: fixed; top: 0; left: 0; width: 100%;
-      padding: 16px 24px; z-index: 100;
-      display: flex; align-items: center;
-      background: linear-gradient(to bottom, rgba(0,0,0,.9), transparent);
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
+
+    body {
+      background: black;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+
+    .topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 16px 24px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, .9),
+        transparent
+      );
+    }
+
     .back {
-      color: white; text-decoration: none; font-size: 16px;
-      padding: 10px 16px; border-radius: 12px;
-      background: rgba(255,255,255,.1); backdrop-filter: blur(10px);
+      color: white;
+      text-decoration: none;
+      font-size: 16px;
+      padding: 10px 16px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .1);
+      backdrop-filter: blur(10px);
       transition: .2s;
     }
-    .back:hover { background: rgba(255,255,255,.2); }
-    iframe { width: 100vw; height: 100vh; border: none; }
+
+    .back:hover {
+      background: rgba(255, 255, 255, .2);
+    }
+
+    iframe {
+      width: 100vw;
+      height: 100vh;
+      border: none;
+    }
+
   </style>
+
 </head>
 
 <body>
+
   <div class="topbar">
     <a href="/" class="back">← Back</a>
   </div>
 
-  <iframe id="player" allowfullscreen referrerpolicy="origin"></iframe>
+  <iframe
+    id="player"
+    allowfullscreen
+    referrerpolicy="origin"
+  ></iframe>
 
   <script>
+
     const params = new URLSearchParams(window.location.search);
-    const id = parseInt(params.get("id"));
+
+    const id      = parseInt(params.get("id"));
+    const type    = params.get("type");       // "movie" or "tv"
+    const season  = parseInt(params.get("season"));
+    const episode = parseInt(params.get("episode"));
+
+    let src = null;
 
     if (!id || isNaN(id)) {
-      document.body.innerHTML = '<p style="color:white;padding:40px;">ID de película inválido.</p>';
+      document.body.innerHTML = '<p style="color:white;padding:40px;">ID inválido.</p>';
+    } else if (type === "tv") {
+      if (!season || !episode || isNaN(season) || isNaN(episode)) {
+        document.body.innerHTML = '<p style="color:white;padding:40px;">Temporada o episodio inválido.</p>';
+      } else {
+        src = `https://player.videasy.net/tv/${id}/${season}/${episode}`;
+      }
     } else {
-      document.getElementById("player").src =
-        `https://player.videasy.net/movie/${id}`;
+      // default: movie
+      src = `https://player.videasy.net/movie/${id}`;
     }
+
+    if (src) {
+      document.getElementById("player").src = src;
+    }
+
   </script>
+
 </body>
 </html>
