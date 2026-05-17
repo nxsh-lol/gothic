@@ -2,88 +2,37 @@
 <html lang="en">
 
 <head>
-
   <meta charset="UTF-8" />
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  />
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Watch Movie</title>
-
   <style>
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      background: black;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: black; overflow: hidden; font-family: Arial, sans-serif; }
     .topbar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      padding: 16px 24px;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      background: linear-gradient(
-        to bottom,
-        rgba(0, 0, 0, .9),
-        transparent
-      );
+      position: fixed; top: 0; left: 0; width: 100%;
+      padding: 16px 24px; z-index: 100;
+      display: flex; align-items: center;
+      background: linear-gradient(to bottom, rgba(0,0,0,.9), transparent);
     }
-
     .back {
-      color: white;
-      text-decoration: none;
-      font-size: 16px;
-      padding: 10px 16px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, .1);
-      backdrop-filter: blur(10px);
+      color: white; text-decoration: none; font-size: 16px;
+      padding: 10px 16px; border-radius: 12px;
+      background: rgba(255,255,255,.1); backdrop-filter: blur(10px);
       transition: .2s;
     }
-
-    .back:hover {
-      background: rgba(255, 255, 255, .2);
-    }
-
-    iframe {
-      width: 100vw;
-      height: 100vh;
-      border: none;
-    }
-
+    .back:hover { background: rgba(255,255,255,.2); }
+    iframe { width: 100vw; height: 100vh; border: none; }
   </style>
-
 </head>
 
 <body>
-
   <div class="topbar">
     <a href="/" class="back">← Back</a>
   </div>
 
-  <iframe
-    id="player"
-    allowfullscreen
-    referrerpolicy="origin"
-  ></iframe>
+  <iframe id="player" allowfullscreen referrerpolicy="origin"></iframe>
 
   <script>
-
-    const VIEW_KEY = "83u3oHjdVnqqmdEGTUvv61q76PwhBc7c_bm9IMYk_s8";
-    const AUTO_PLAY = "1";
-
     const params = new URLSearchParams(window.location.search);
     const id = parseInt(params.get("id"));
 
@@ -91,10 +40,8 @@
       document.body.innerHTML = '<p style="color:white;padding:40px;">ID de película inválido.</p>';
     } else {
       document.getElementById("player").src =
-        `https://vimeus.com/e/movie?tmdb=${id}&view_key=${VIEW_KEY}&autoplay=${AUTO_PLAY}`;
+        `https://player.videasy.net/movie/${id}`;
     }
-
   </script>
-
 </body>
 </html>
