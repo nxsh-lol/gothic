@@ -4,12 +4,7 @@
 <head>
 
   <meta charset="UTF-8" />
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  />
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Watch</title>
 
   <style>
@@ -26,41 +21,91 @@
       font-family: Arial, sans-serif;
     }
 
+    /* ── Topbar ── */
     .topbar {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
-      padding: 16px 24px;
+      padding: 12px 20px;
       z-index: 100;
       display: flex;
       align-items: center;
-      background: linear-gradient(
-        to bottom,
-        rgba(0, 0, 0, .9),
-        transparent
-      );
+      gap: 12px;
+      background: linear-gradient(to bottom, rgba(0,0,0,.92), transparent);
     }
 
     .back {
       color: white;
       text-decoration: none;
-      font-size: 16px;
-      padding: 10px 16px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, .1);
+      font-size: 15px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.1);
       backdrop-filter: blur(10px);
-      transition: .2s;
+      transition: background .2s;
+      white-space: nowrap;
     }
 
-    .back:hover {
-      background: rgba(255, 255, 255, .2);
+    .back:hover { background: rgba(255,255,255,.2); }
+
+    /* ── Episode selector (TV only) ── */
+    #episodeBar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
+    .ep-label {
+      color: rgba(255,255,255,.5);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .ep-select {
+      appearance: none;
+      background: rgba(255,255,255,.1);
+      backdrop-filter: blur(10px);
+      color: white;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 8px;
+      padding: 6px 28px 6px 10px;
+      font-size: 13px;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,.5)'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      transition: background-color .2s, border-color .2s;
+    }
+
+    .ep-select:hover {
+      background-color: rgba(255,255,255,.18);
+      border-color: rgba(255,255,255,.3);
+    }
+
+    .ep-select:focus {
+      outline: none;
+      border-color: rgba(255,255,255,.45);
+    }
+
+    .ep-select option {
+      background: #1a1a1a;
+      color: white;
+    }
+
+    /* ── Player ── */
     iframe {
       width: 100vw;
       height: 100vh;
       border: none;
+    }
+
+    /* ── Error / loading states ── */
+    .message {
+      color: rgba(255,255,255,.7);
+      padding: 80px 40px;
+      font-size: 16px;
     }
 
   </style>
@@ -71,40 +116,138 @@
 
   <div class="topbar">
     <a href="/" class="back">← Back</a>
+    <div id="episodeBar" style="display:none"></div>
   </div>
 
-  <iframe
-    id="player"
-    allowfullscreen
-    referrerpolicy="origin"
-  ></iframe>
+  <iframe id="player" allowfullscreen referrerpolicy="origin"></iframe>
 
   <script>
 
-    const params = new URLSearchParams(window.location.search);
+    const TMDB_KEY = 'dc6928354c2596ad811fdc698560b4ac';
+    const params   = new URLSearchParams(window.location.search);
+    const id       = parseInt(params.get('id'));
+    const type     = params.get('type'); // "movie" or "tv"
 
-    const id      = parseInt(params.get("id"));
-    const type    = params.get("type");       // "movie" or "tv"
-    const season  = parseInt(params.get("season"));
-    const episode = parseInt(params.get("episode"));
+    let currentSeason  = parseInt(params.get('season'))  || 1;
+    let currentEpisode = parseInt(params.get('episode')) || 1;
 
-    let src = null;
+    // ── Helpers ────────────────────────────────────────────
 
-    if (!id || isNaN(id)) {
-      document.body.innerHTML = '<p style="color:white;padding:40px;">ID inválido.</p>';
-    } else if (type === "tv") {
-      if (!season || !episode || isNaN(season) || isNaN(episode)) {
-        document.body.innerHTML = '<p style="color:white;padding:40px;">Temporada o episodio inválido.</p>';
-      } else {
-        src = `https://player.videasy.net/tv/${id}/${season}/${episode}`;
-      }
-    } else {
-      // default: movie
-      src = `https://player.videasy.net/movie/${id}`;
+    function setPlayer(src) {
+      document.getElementById('player').src = src;
     }
 
-    if (src) {
-      document.getElementById("player").src = src;
+    function showError(msg) {
+      document.body.innerHTML = `<p class="message">${msg}</p>`;
+    }
+
+    function playEpisode(season, episode) {
+      currentSeason  = season;
+      currentEpisode = episode;
+      setPlayer(`https://player.videasy.net/tv/${id}/${season}/${episode}`);
+    }
+
+    // ── TMDB fetch ──────────────────────────────────────────
+
+    async function tmdb(path) {
+      const url = `https://api.themoviedb.org/3${path}?api_key=${TMDB_KEY}`;
+      const res  = await fetch(url);
+      if (!res.ok) throw new Error('TMDB error');
+      return res.json();
+    }
+
+    // ── Build episode bar ───────────────────────────────────
+
+    async function buildEpisodeBar() {
+      const bar = document.getElementById('episodeBar');
+      bar.style.display = 'flex';
+      bar.innerHTML = '<span class="ep-label">Loading…</span>';
+
+      // Fetch show details to get season list
+      const show = await tmdb(`/tv/${id}`);
+      const seasons = (show.seasons || []).filter(s => s.season_number > 0);
+
+      if (!seasons.length) {
+        bar.innerHTML = '<span class="ep-label">No seasons found</span>';
+        return;
+      }
+
+      // Season select
+      const seasonSel = document.createElement('select');
+      seasonSel.className = 'ep-select';
+      seasonSel.setAttribute('aria-label', 'Season');
+
+      seasons.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.season_number;
+        opt.textContent = `Season ${s.season_number}`;
+        if (s.season_number === currentSeason) opt.selected = true;
+        seasonSel.appendChild(opt);
+      });
+
+      // Episode select (populated dynamically)
+      const episodeSel = document.createElement('select');
+      episodeSel.className = 'ep-select';
+      episodeSel.setAttribute('aria-label', 'Episode');
+
+      async function loadEpisodes(seasonNum) {
+        episodeSel.innerHTML = '<option>Loading…</option>';
+        episodeSel.disabled = true;
+
+        const seasonData = await tmdb(`/tv/${id}/season/${seasonNum}`);
+        const episodes   = seasonData.episodes || [];
+
+        episodeSel.innerHTML = '';
+        episodes.forEach(ep => {
+          const opt = document.createElement('option');
+          opt.value = ep.episode_number;
+          opt.textContent = `E${ep.episode_number} – ${ep.name}`;
+          if (ep.episode_number === currentEpisode && seasonNum === currentSeason) {
+            opt.selected = true;
+          }
+          episodeSel.appendChild(opt);
+        });
+
+        episodeSel.disabled = false;
+      }
+
+      // Wire season change
+      seasonSel.addEventListener('change', async () => {
+        const s = parseInt(seasonSel.value);
+        currentEpisode = 1;
+        await loadEpisodes(s);
+        playEpisode(s, 1);
+      });
+
+      // Wire episode change
+      episodeSel.addEventListener('change', () => {
+        playEpisode(parseInt(seasonSel.value), parseInt(episodeSel.value));
+      });
+
+      bar.innerHTML = '';
+      const nameLabel = document.createElement('span');
+      nameLabel.className = 'ep-label';
+      nameLabel.textContent = show.name || '';
+      bar.appendChild(nameLabel);
+      bar.appendChild(seasonSel);
+      bar.appendChild(episodeSel);
+
+      // Load initial season episodes then start playback
+      await loadEpisodes(currentSeason);
+      playEpisode(currentSeason, currentEpisode);
+    }
+
+    // ── Init ────────────────────────────────────────────────
+
+    if (!id || isNaN(id)) {
+      showError('ID inválido.');
+    } else if (type === 'tv') {
+      buildEpisodeBar().catch(() => {
+        // Fallback: play S1E1 without selector
+        playEpisode(1, 1);
+      });
+    } else {
+      setPlayer(`https://player.videasy.net/movie/${id}`);
     }
 
   </script>
